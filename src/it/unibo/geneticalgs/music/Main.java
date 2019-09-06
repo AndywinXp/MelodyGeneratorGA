@@ -4,7 +4,7 @@ import java.util.ArrayList;
 public class Main {
 
 	public static void main(String[] args) {
-		int targetGens = 500;
+		int targetGens = 1000;
 		
 		// Chords (C major scale, three voices harmony)
 		ArrayList<Integer> c = new ArrayList<Integer>();
@@ -37,25 +37,30 @@ public class Main {
 		Chord Bdim = new Chord("Bdim", bdim);
 		
 		// Choose chords
-		Chord[] arrayseq = {Dm, F, Am, G};
+		//Chord[] arrayseq = {Dm, F, Am, G};
+		//Chord[] arrayseq = {C, C, C, C};
+		//Chord[] arrayseq = {C, F, Am, F};
+		Chord[] arrayseq = {F, C, Am, G};
 		NaiveChordSequence seq = new NaiveChordSequence(arrayseq);
 		
 		// Weights parsing
 		int interv_w = 2;
 		int rest_w = 5;
+		int nonharm_w = 2;
 		if (args.length > 0) {
-			interv_w = isInt(args[0]) ? getInt(args[0]) : 2;
-			rest_w = isInt(args[1]) ? getInt(args[1]) : 5;
+			interv_w = (isInt(args[0]) && getInt(args[0]) < 4 && getInt(args[0]) > 0) ? getInt(args[0]) : 2;
+			rest_w = (isInt(args[1]) && getInt(args[1]) < 10 && getInt(args[1]) > 0) ? getInt(args[1]) : 5;
+			nonharm_w = (isInt(args[2]) && getInt(args[2]) < 10 && getInt(args[2]) > 0) ? getInt(args[2]) : 2;
 		}
 				
-		// Input weights: [ 1,2,3 = small\irrelevant\big intervals, 1...9 = less...more rests]
-		int[] weights = {interv_w, rest_w};
+		// Input weights: [ 1,2,3 = small\irrelevant\big intervals, 1...9 = less...more rests, 1...9 = strength of non harmonic repeal]
+		int[] weights = {interv_w, rest_w, nonharm_w};
 		
 		// Initialize and start the program
 		IGACore core = new GACoreMusic(seq, weights);
 		
 		core.init();
-		core.start(targetGens);
+		core.start(targetGens, 700);
 	}
 	
 	public static int getInt(String string) {

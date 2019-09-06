@@ -46,7 +46,7 @@ public class IndividualMusic implements IIndividual {
 		}
 		
 		notesTable = new Hashtable<Integer, String>();
-		notesTable.put(0, "REST"); notesTable.put(1, "C3"); 
+		notesTable.put(0, "RT"); notesTable.put(1, "C3"); 
 		notesTable.put(2, "D3"); notesTable.put(3, "E3"); notesTable.put(4, "F3"); 
 		notesTable.put(5, "G3"); notesTable.put(6, "A3"); notesTable.put(7, "B3"); 
 		notesTable.put(8, "C4"); notesTable.put(9, "D4"); notesTable.put(10, "E4"); 
@@ -74,33 +74,42 @@ public class IndividualMusic implements IIndividual {
 			
 			// Create a list of differences
 			for (int i = 1; i < templist.size(); i++)
-			    difflist.add(Math.abs(getGeneAtIndex(i)-getGeneAtIndex(i-1)));
+			    difflist.add(Math.abs(templist.get(i)-templist.get(i-1)));
 			
 			// Normalize the values to -1 and 1
-			int minVal = templist.get(templist.indexOf(Collections.min(templist)));
-			int maxVal = templist.get(templist.indexOf(Collections.max(templist)));
-			
-			for (Integer a : difflist) {
-				double value = (a.intValue() - (maxVal+minVal)/2)/((maxVal-minVal)/2);
-				normdifflist.add(value);
-			}
-			
+			double minVal = difflist.get(difflist.indexOf(Collections.min(difflist)));
+			double maxVal = difflist.get(difflist.indexOf(Collections.max(difflist)));
 			int raiseAmount = 0;
-			if (weights[0] == 1) { // Prefer smaller differences (values closer to -1)
-				for (int i = 0; i < normdifflist.size(); i++) {
-					raiseAmount -= normdifflist.get(i)*100;
+			
+			if (maxVal != minVal) {
+				for (Integer a : difflist) {
+					double value = 2.0*((a.intValue() - minVal)/(maxVal-minVal))-1.0;
+					normdifflist.add(value);
 				}
-			} else if (weights[0] == 3) { // Prefer bigger differences
-				for (int i = 0; i < normdifflist.size(); i++) {
-					raiseAmount += normdifflist.get(i)*100;
+
+				if (weights[0] == 1) { // Prefer smaller differences (values closer to -1)
+					for (int i = 0; i < normdifflist.size(); i++) {
+						raiseAmount -= normdifflist.get(i)*100;
+					}
+				} else if (weights[0] == 3) { // Prefer bigger differences
+					for (int i = 0; i < normdifflist.size(); i++) {
+						raiseAmount += normdifflist.get(i)*100;
+					}
 				}
+				
+			} else { // ...should almost never happen.
+				// All values are equal, so we have edge case in which notes are
+				// C3 C4 C3 C4 ... (diff: 14) or C3 D3 E3 F3 ... (diff: 1) and
+				// all the cases in between where we have just one constant diff.
+				raiseAmount += (minVal/getGeneLength())*100;
 			}
+			
 			raiseFitness(raiseAmount);
 		}
 		
 		
 		// NOTES/RESTS RATIO (depends on user defined weight)
-		// If the weight is 5, then this is irrelevant
+		// If the weight is 5, then this is irrelevant.
 		if (weights[1] != 5) {
 			int rests = 0;
 			for (int i = 0; i < getGeneLength(); i++) {
@@ -119,7 +128,7 @@ public class IndividualMusic implements IIndividual {
 		}
 		
 		
-		// SUCCESSIVE NON HARMONIC TONES
+		// SUCCESSIVE NON-HARMONIC TONES (depends on user defined weight)
 		int nonHarmonicCount = 0;
 		
 		for (int i = 0; i < getGeneLength(); i++) {
@@ -129,13 +138,23 @@ public class IndividualMusic implements IIndividual {
 				if (!temp.isComponentInChord(getGeneAtIndex(i))) {
 					nonHarmonicCount++;
 				} else {
+					// We've reached the end of the non-harmonic sequence.
+					// We penalize the score based on how many successive non-harmonic tones there are 
+					// and then we reset the counter.
+					// Edge case: if this occurs at the first iteration, nothing happens.
+					raiseFitness(- (int) Math.round((nonHarmonicCount*10*weights[2])));
 					nonHarmonicCount = 0;
 				}
 			}
 		}
 		
-		// We penalize the score based on how many successive non-harmonic tones there are 
-		raiseFitness(- (int) Math.round((nonHarmonicCount*25)));
+		if (nonHarmonicCount > 0) {
+			// Finally, if a non-harmonic sequence occurs in the last few notes,
+			// (e.g. we get out of the loop but we still have a non-harmonic
+			// sequence to "flush"), we take care of that, too.
+			raiseFitness(- (int) Math.round((nonHarmonicCount*10*weights[2])));
+		}
+		
 		
 		// LAST TONE POINTS
 		int lastToneIndex = 0;

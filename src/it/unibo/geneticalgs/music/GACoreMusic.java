@@ -11,6 +11,7 @@ public class GACoreMusic implements IGACore {
 	IndividualMusic parent2;
 	NaiveChordSequence seq;
 	final int popLength = 100;
+	boolean flagFitness;
 	
 	public GACoreMusic(NaiveChordSequence seq, int[] weights) {
 		genCount = 0;
@@ -23,6 +24,7 @@ public class GACoreMusic implements IGACore {
 		pop.init();
 		pop.computeFitness(seq);
 		rn = new Random();
+		flagFitness = false;
 
 		System.out.println("Generation: " + 
 		+ genCount + " Fittest ID: " + ((IndividualMusic) pop.getFirstParent()).getID() + 
@@ -72,8 +74,9 @@ public class GACoreMusic implements IGACore {
 	}
 
 	@Override
-	public void start(int targetGens) {
-		while (genCount < targetGens) {
+	public void start(int targetGens, int desiredMinFitness) {
+		boolean canStop = false;
+		while (!canStop) {
 			genCount++;
 			selection();
 			crossover();
@@ -92,9 +95,19 @@ public class GACoreMusic implements IGACore {
 					+ genCount + " Fittest ID: " + ((IndividualMusic) pop.getFirstParent()).getID() + 
 					 " with genes " + ((IndividualMusic) pop.getFirstParent()).toString() +
 					 " and fitness " + ((IndividualMusic) pop.getFirstParent()).getFitness() + 
-					 " over chords " + seq.toString());			
+					 " over chords " + seq.toString());		
+			
+			
+			
+			canStop = isGoalReached(targetGens, desiredMinFitness);
 		}
 		
+	}
+	
+	boolean isGoalReached(int targetGens, int desiredMinFitness) {
+		if (getFittestOffspring().getFitness() >= desiredMinFitness && genCount >= targetGens)
+			return true;	
+		return false;
 	}
 	
     IndividualMusic getFittestOffspring() {
