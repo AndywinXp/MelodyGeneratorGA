@@ -40,7 +40,10 @@ public class Main {
 		//Chord[] arrayseq = {Dm, F, Am, G};
 		//Chord[] arrayseq = {C, C, C, C};
 		//Chord[] arrayseq = {C, F, Am, F};
-		Chord[] arrayseq = {F, C, Am, G};
+		//Chord[] arrayseq = {F, C, Am, G};
+		//Chord[] arrayseq = {C, C, Dm, G};
+		//Chord[] arrayseq = {Am, Am, Dm, Dm};
+		Chord[] arrayseq = {F, F, G, G};
 		NaiveChordSequence seq = new NaiveChordSequence(arrayseq);
 		
 		// Weights parsing
@@ -60,7 +63,7 @@ public class Main {
 		IGACore core = new GACoreMusic(seq, weights);
 		
 		core.init();
-		core.start(targetGens, 700);
+		core.start(targetGens, 600);
 	}
 	
 	public static int getInt(String string) {

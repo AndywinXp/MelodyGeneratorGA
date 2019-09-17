@@ -83,7 +83,7 @@ public class GACoreMusic implements IGACore {
 			mutation();
 			
 			// Replacing individuals with fittest ones
-			
+			addFittestOffspring();
 			pop.computeFitness(seq);
 			
 		/*	System.out.println("Generation: " + 
